@@ -3,12 +3,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-# v2 - learning rate scheduler, embed=128, heads=2, expansion=4, dropout=0.2, blocks=3
-# v3 - embed=256, heads=4, expansion=4, dropout=0.2, blocks=3
-# v4 - initialise weights, prunning, resizing
-# v5 -> embed_size=768, head=8
-# ! vf Laura: used pretrained, and freezed everything, except for the heads
-
 
 # Fixed parameters
 EMBED_SIZE = 768
