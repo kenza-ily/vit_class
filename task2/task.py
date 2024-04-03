@@ -5,8 +5,33 @@ import torch.optim as optim
 import torchvision
 import torchvision.transforms as transforms
 import torch.optim.lr_scheduler as lr_scheduler
+import torch.nn.utils.prune as prune
+from torchvision.transforms import Resize
 from models import SimplifiedViT
 from data import MixUp
+
+
+
+def apply_pruning(module, amount=0.1):
+    """ Apply unstructured pruning based on the L1 norm of weights. """
+    for m in module.modules():
+        if isinstance(m, nn.Conv2d) or isinstance(m, nn.Linear):
+            prune.l1_unstructured(m, name='weight', amount=amount)
+
+
+def initialize_weights(m):
+    if isinstance(m, nn.Conv2d):
+        nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+        if m.bias is not None:
+            nn.init.constant_(m.bias, 0)
+    elif isinstance(m, nn.Linear):
+        nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+        if m.bias is not None:
+            nn.init.constant_(m.bias, 0)
+    elif isinstance(m, nn.LayerNorm):
+        nn.init.constant_(m.weight, 1)
+        nn.init.constant_(m.bias, 0)
+
 
 def mixup_criterion(criterion, pred, y_a, y_b, lam):
     return lam * criterion(pred, y_a) + (1 - lam) * criterion(pred, y_b)
@@ -32,6 +57,7 @@ def train_with_mixup(sampling_method, num_epochs=20):
     # Initialize the model, loss function, and optimizer
     # Ensure the SimplifiedViT class is correctly initialized as per your modifications
     net = SimplifiedViT().to(device)
+    net.apply(initialize_weights)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(net.parameters(), lr=0.01, momentum=0.9)  #v2 - lr=0.001 brought very low results with SimplifiedViT v1 -> lr=0.01
     mixup = MixUp(alpha=1.0, sampling_method=sampling_method, seed=42)
@@ -62,6 +88,13 @@ def train_with_mixup(sampling_method, num_epochs=20):
             _, predicted = torch.max(outputs.data, 1) # Get the predicted labels
             total += labels.size(0)
             correct += (lam * (predicted == targets_a).float() + (1 - lam) * (predicted == targets_b).float()).sum().item()
+            
+        # v4 - Prunning
+        # Apply pruning at specified epochs and gradually increase the amount
+        if epoch % 5 == 4:  # Example: Apply pruning every 5 epochs
+            prune_amount = 0.05 + 0.05 * (epoch // 5)  # Increase pruning amount gradually
+            apply_pruning(net, amount=prune_amount)
+            print(f'Applied pruning with amount {prune_amount:.2f}')
         
         # v2 - Step the learning rate scheduler
         scheduler.step()

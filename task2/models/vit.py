@@ -1,18 +1,34 @@
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-# v2 - embed=128, heads=2, expansion=4, dropout=0.2, blocks=3
+# v2 - learning rate scheduler, embed=128, heads=2, expansion=4, dropout=0.2, blocks=3
 # v3 - embed=256, heads=4, expansion=4, dropout=0.2, blocks=3
+# v4 - initialise weights, prunning, resizing
+# v5 -> embed_size=768, head=8
+# ! vf Laura: used pretrained, and freezed everything, except for the heads
+
+
+# Fixed parameters
+EMBED_SIZE = 768
+NUM_HEADS = 8
+PATCH_SIZE = 4
+NUM_CLASSES = 10
+EXPANSION = 4
+DROPOUT_P = 0.2
+NUM_BLOCKS = 3
+IMG_SIZE = 32
+
 class PatchEmbedding(nn.Module):
     """ Embedding for CIFAR-10 images """
-    def __init__(self, in_channels=3, patch_size=4, emb_size=256, img_size=32):
+    def __init__(self, in_channels=3, patch_size=PATCH_SIZE, emb_size=EMBED_SIZE, img_size=IMG_SIZE):
         super().__init__()
         self.patch_size = patch_size
-        self.n_patches = (img_size // patch_size) ** 2
+        self.n_patches = (img_size // patch_size) ** 2 # Defining the number of patches
 
-        self.projection = nn.Conv2d(in_channels, emb_size, kernel_size=patch_size, stride=patch_size)
-        self.position_embeddings = nn.Parameter(torch.randn(self.n_patches+1, emb_size))
+        self.projection = nn.Conv2d(in_channels, emb_size, kernel_size=patch_size, stride=patch_size) 
+        self.position_embeddings = nn.Parameter(torch.randn(self.n_patches+1, emb_size)) # +1 for the CLS token
         self.cls_token = nn.Parameter(torch.randn(1, 1, emb_size))
 
     def forward(self, x):
@@ -25,7 +41,7 @@ class PatchEmbedding(nn.Module):
 
 
 class MultiHeadSelfAttention(nn.Module):
-    def __init__(self, emb_size=256, n_heads=4):
+    def __init__(self, emb_size=EMBED_SIZE, n_heads=NUM_HEADS):
         super().__init__()
         self.emb_size = emb_size
         self.n_heads = n_heads
@@ -46,7 +62,7 @@ class MultiHeadSelfAttention(nn.Module):
         return self.fc_out(out)
 
 class TransformerEncoderBlock(nn.Module):
-    def __init__(self, emb_size=256, n_heads=4, expansion=4, dropout_p=0.2):
+    def __init__(self, emb_size=EMBED_SIZE, n_heads=NUM_HEADS, expansion=EXPANSION, dropout_p=DROPOUT_P):
         super().__init__()
         self.attention = MultiHeadSelfAttention(emb_size, n_heads)
         self.norm1 = nn.LayerNorm(emb_size)
@@ -67,7 +83,9 @@ class TransformerEncoderBlock(nn.Module):
         return out
 
 class SimplifiedViT(nn.Module):
-    def __init__(self, img_size=32, patch_size=4, num_classes=10, emb_size=256, n_heads=4, expansion=4, dropout_p=0.2, n_blocks=3):
+    def __init__(self, img_size=IMG_SIZE, patch_size=PATCH_SIZE, num_classes=NUM_CLASSES, 
+                 emb_size=EMBED_SIZE, n_heads=NUM_HEADS, expansion=EXPANSION, 
+                 dropout_p=DROPOUT_P, n_blocks=NUM_BLOCKS):
         super().__init__()
         self.patch_embedding = PatchEmbedding(img_size=img_size, patch_size=patch_size, emb_size=emb_size)
         self.transformer_blocks = nn.Sequential(*[TransformerEncoderBlock(emb_size=emb_size, n_heads=n_heads, expansion=expansion, dropout_p=dropout_p) for _ in range(n_blocks)])
