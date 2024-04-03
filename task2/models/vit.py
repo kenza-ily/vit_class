@@ -2,9 +2,11 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+# v2 - embed=128, heads=2, expansion=4, dropout=0.2, blocks=3
+
 class PatchEmbedding(nn.Module):
     """ Embedding for CIFAR-10 images """
-    def __init__(self, in_channels=3, patch_size=4, emb_size=64, img_size=32):
+    def __init__(self, in_channels=3, patch_size=4, emb_size=128, img_size=32):
         super().__init__()
         self.patch_size = patch_size
         self.n_patches = (img_size // patch_size) ** 2
@@ -23,7 +25,7 @@ class PatchEmbedding(nn.Module):
 
 
 class MultiHeadSelfAttention(nn.Module):
-    def __init__(self, emb_size=64, n_heads=1):
+    def __init__(self, emb_size=128, n_heads=2):
         super().__init__()
         self.emb_size = emb_size
         self.n_heads = n_heads
@@ -44,7 +46,7 @@ class MultiHeadSelfAttention(nn.Module):
         return self.fc_out(out)
 
 class TransformerEncoderBlock(nn.Module):
-    def __init__(self, emb_size=64, n_heads=1, expansion=2, dropout_p=0.1):
+    def __init__(self, emb_size=128, n_heads=2, expansion=4, dropout_p=0.2):
         super().__init__()
         self.attention = MultiHeadSelfAttention(emb_size, n_heads)
         self.norm1 = nn.LayerNorm(emb_size)
@@ -65,15 +67,15 @@ class TransformerEncoderBlock(nn.Module):
         return out
 
 class SimplifiedViT(nn.Module):
-    def __init__(self, img_size=32, patch_size=4, num_classes=10, emb_size=64, n_heads=1, expansion=2, dropout_p=0.1):
+    def __init__(self, img_size=32, patch_size=4, num_classes=10, emb_size=128, n_heads=2, expansion=4, dropout_p=0.2, n_blocks=3):
         super().__init__()
         self.patch_embedding = PatchEmbedding(img_size=img_size, patch_size=patch_size, emb_size=emb_size)
-        self.transformer_block = TransformerEncoderBlock(emb_size=emb_size, n_heads=n_heads, expansion=expansion, dropout_p=dropout_p)
+        self.transformer_blocks = nn.Sequential(*[TransformerEncoderBlock(emb_size=emb_size, n_heads=n_heads, expansion=expansion, dropout_p=dropout_p) for _ in range(n_blocks)])
         self.classifier = nn.Linear(emb_size, num_classes)
 
     def forward(self, x):
         x = self.patch_embedding(x)
-        x = self.transformer_block(x)
+        x = self.transformer_blocks(x)
         cls_token = x[:, 0]
         out = self.classifier(cls_token)
         return out

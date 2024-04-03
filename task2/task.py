@@ -4,6 +4,7 @@ import torch.nn as nn
 import torch.optim as optim
 import torchvision
 import torchvision.transforms as transforms
+import torch.optim.lr_scheduler as lr_scheduler
 from models import SimplifiedViT
 from data import MixUp
 
@@ -32,16 +33,17 @@ def train_with_mixup(sampling_method, num_epochs=20):
     # Ensure the SimplifiedViT class is correctly initialized as per your modifications
     net = SimplifiedViT().to(device)
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
+    optimizer = optim.SGD(net.parameters(), lr=0.01, momentum=0.9)  #v2 - lr=0.001 brought very low results with SimplifiedViT v1 -> lr=0.01
     mixup = MixUp(alpha=1.0, sampling_method=sampling_method, seed=42)
+    
+    # v2 - Introduce a learning rate scheduler
+    scheduler = lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.1)  # Adjust learning rate every 5 epochs
 
-    train_acc = []
-    test_acc = []
+
+    train_acc, test_acc = [], []  # Initialize accuracy lists
 
     for epoch in range(num_epochs):
-        running_loss = 0.0
-        correct = 0
-        total = 0
+        running_loss, correct, total = 0.0, 0, 0
 
         # Training loop
         net.train()  # Set the model to training mode
@@ -59,8 +61,11 @@ def train_with_mixup(sampling_method, num_epochs=20):
             running_loss += loss.item()
             _, predicted = torch.max(outputs.data, 1) # Get the predicted labels
             total += labels.size(0)
-            correct += (predicted == labels).sum().item()
-
+            correct += (lam * (predicted == targets_a).float() + (1 - lam) * (predicted == targets_b).float()).sum().item()
+        
+        # v2 - Step the learning rate scheduler
+        scheduler.step()
+        
         train_acc.append(100 * correct / total)
         print(f'Epoch {epoch+1} - Training accuracy: {train_acc[-1]:.2f}%')
 
