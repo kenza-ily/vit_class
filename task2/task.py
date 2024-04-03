@@ -7,7 +7,7 @@ import torchvision.transforms as transforms
 import torch.optim.lr_scheduler as lr_scheduler
 import torch.nn.utils.prune as prune
 from torchvision.transforms import Resize
-from models import SimplifiedViT
+from models import ViT
 from data import MixUp
 
 
@@ -40,6 +40,7 @@ def train_with_mixup(sampling_method, num_epochs=20):
     
     # Defining the data transformation for CIFAR-10
     transform = transforms.Compose([
+        transforms.Resize((224, 224)),  # Resize images to 224x224 pixels
         transforms.ToTensor(),  # Convert images to PyTorch tensors
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))  # Normalize the images
     ])
@@ -56,8 +57,8 @@ def train_with_mixup(sampling_method, num_epochs=20):
 
     # Initialize the model, loss function, and optimizer
     # Ensure the SimplifiedViT class is correctly initialized as per your modifications
-    net = SimplifiedViT().to(device)
-    net.apply(initialize_weights)
+    net = ViT().to(device)
+    net.vit.heads.head.apply(initialize_weights)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(net.parameters(), lr=0.01, momentum=0.9)  #v2 - lr=0.001 brought very low results with SimplifiedViT v1 -> lr=0.01
     mixup = MixUp(alpha=1.0, sampling_method=sampling_method, seed=42)
