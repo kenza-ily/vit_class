@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.optim as optim
 import torchvision
 import torchvision.transforms as transforms
-from models import ViT
+from models import SimplifiedViT
 from data import MixUp
 
 def mixup_criterion(criterion, pred, y_a, y_b, lam):
@@ -12,11 +12,10 @@ def mixup_criterion(criterion, pred, y_a, y_b, lam):
 
 def train_with_mixup(sampling_method, num_epochs=20):
     
-    # Defining the data transformation
+    # Defining the data transformation for CIFAR-10
     transform = transforms.Compose([
-        transforms.Resize((224, 224)), # necessary for the ViT model
-        transforms.ToTensor(),
-        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+        transforms.ToTensor(),  # Convert images to PyTorch tensors
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))  # Normalize the images
     ])
 
     # Load the CIFAR-10 dataset - train and test
@@ -26,14 +25,12 @@ def train_with_mixup(sampling_method, num_epochs=20):
     testset = torchvision.datasets.CIFAR10(root='data', train=False, download=True, transform=transform)
     testloader = torch.utils.data.DataLoader(testset, batch_size=32, shuffle=False)
 
-    # Define the classes
-    classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
-
     # Define the device
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     # Initialize the model, loss function, and optimizer
-    net = ViT().to(device)
+    # Ensure the SimplifiedViT class is correctly initialized as per your modifications
+    net = SimplifiedViT().to(device)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
     mixup = MixUp(alpha=1.0, sampling_method=sampling_method, seed=42)
