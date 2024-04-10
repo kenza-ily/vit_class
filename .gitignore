@@ -12,3 +12,6 @@ task2/model_sampling_1.pth
 task2/model_sampling_2.pth
 task2/model_sampling_1.pth
 task2/model_sampling_2.pth
+/task3/data/cifar-10-batches-py
+task3/data/cifar-10-python.tar.gz
+.DS_Store
