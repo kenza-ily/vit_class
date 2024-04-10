@@ -10,9 +10,10 @@ from torchvision.transforms import Resize
 from models import ViT
 from data import MixUp
 
+PRUNING_AMOUNT=0.1
 
 
-def apply_pruning(module, amount=0.1):
+def apply_pruning(module, amount=PRUNING_AMOUNT):
     """ Apply unstructured pruning based on the L1 norm of weights. """
     for m in module.modules():
         if isinstance(m, nn.Conv2d) or isinstance(m, nn.Linear):
@@ -35,6 +36,9 @@ def initialize_weights(m):
 
 def mixup_criterion(criterion, pred, y_a, y_b, lam):
     return lam * criterion(pred, y_a) + (1 - lam) * criterion(pred, y_b)
+
+
+
 
 def train_with_mixup(sampling_method, num_epochs=20):
     

@@ -17,7 +17,3 @@ class ViT(nn.Module):
     def forward(self, x):
         x = self.vit(x)
         return x
-    
-    
-net = ViT().to(device)
-net.vit.heads.head.apply(initialize_weights)
