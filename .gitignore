@@ -1,0 +1,10 @@
+
+/data/cifar-10-batches-py
+/litterature
+/old_task2
+/data
+/task2/data/__pycache__
+/task2/data/cifar-10-batches-py
+/task2/models/__pycache__
+/task2/utils/__pycache__
+task2/data/cifar-10-python.tar.gz
