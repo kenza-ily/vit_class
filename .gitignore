@@ -17,3 +17,11 @@ task3/data/cifar-10-python.tar.gz
 .DS_Store
 Assessed-Component-1 COMP0197 2023-24.pdf
 task2/model_sampling_1_gc.pth
+task1/__pycache__/functions.cpython-312.pyc
+task2/models/task2_models_Colab/model_sampling_1.pth
+task2/model_20.pth
+*.pth
+task2/old_task2/saved_model_with_mixup.pt
+COMP0197-CW1-HVWM7/COMP0197-CW1-HVWM7.zip
+*.pth
+task1/__pycache__/functions.cpython-312.pyc
