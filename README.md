@@ -1,7 +1,4 @@
-# 24_ViT_class
-
-
-https://drive.google.com/drive/folders/1ZZWKPsLV8PV18O2pwcZ8xVLG5GfYE06H?usp=share_link
+# Classification using Vision Transformers (ViT) and MixUp Augmentation
 
 
 **Project Title:** Multiple-class classification with Vision Transformers \\ Applied Deep Learning Coursework - COMP0197
